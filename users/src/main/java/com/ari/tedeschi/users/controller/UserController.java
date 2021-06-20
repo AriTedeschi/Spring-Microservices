@@ -45,7 +45,7 @@ public class UserController {
 		log.info("UserController | getById | user with "+id+" was found and returned");
 		
 		Department department = restTemplate
-				.getForObject("http://localhost:9091/departments/"+user.getDepartmentId(),
+				.getForObject("http://DEPARTMENT-SERVICE/departments/"+user.getDepartmentId(),
 						Department.class);
 		
 		
