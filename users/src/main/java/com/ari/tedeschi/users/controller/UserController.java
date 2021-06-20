@@ -3,6 +3,7 @@ package com.ari.tedeschi.users.controller;
 import java.net.URI;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,6 +19,7 @@ import com.ari.tedeschi.users.service.UserService;
 import com.ari.tedeschi.users.vo.Department;
 import com.ari.tedeschi.users.vo.ResponseTemplateVO;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
@@ -27,7 +29,10 @@ public class UserController {
 	@Autowired UserService service;
 	@Autowired RestTemplate restTemplate;
 	
+	private static final String CB_SERVICE = "userService";
+	
 	@PostMapping
+	@CircuitBreaker(name=CB_SERVICE, fallbackMethod = "fallback")
 	public ResponseEntity<User> insertUser(@RequestBody User user) {
 		log.info("UserController | insertUser was called");
 		user = service.insert(user);
@@ -39,6 +44,7 @@ public class UserController {
 	}
 	
 	@GetMapping("/{id}")
+	@CircuitBreaker(name=CB_SERVICE, fallbackMethod = "fallback")
 	public ResponseEntity<ResponseTemplateVO> getById(@PathVariable("id") Long id) {
 		log.info("UserController | getById was called");
 		User user = service.getById(id);
@@ -51,4 +57,8 @@ public class UserController {
 		
 		return ResponseEntity.ok().body(ResponseTemplateVO.from(user, department));
 	}
+	
+	public ResponseEntity<String> fallback(Exception e){
+        return new ResponseEntity<String>("Department service is down", HttpStatus.SERVICE_UNAVAILABLE);
+    }
 }
